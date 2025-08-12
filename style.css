@@ -1,0 +1,201 @@
+@import "code-light.css" (prefers-color-scheme: light);
+@import "code-dark.css" (prefers-color-scheme: dark);
+
+:root {
+    color-scheme: light dark;
+    --background: light-dark(#FFFFFF, #A195A6);
+    --background-dim: light-dark(#f5f7f9, #A195A6);
+    --foreground: light-dark(#2B303A, #000);
+    --foreground-dim: light-dark(#576379, #000);
+    --foreground-heavy: light-dark(#191C22, #000);
+    --primary-color: light-dark(#19BF6C, #19BF6C);
+}
+
+html {
+  font-size: 18px;
+  font-family: serif;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 50rem;
+  /* background: var(--background); */
+  color: var(--foreground);
+  line-height: 1.5;
+  padding: 0rem 0.5rem;
+  background-image: url('floor_tiles-2.png');
+}
+
+aside {
+    font-size: smaller;
+    font-style: italic;
+    color: var(--foreground-dim);
+}
+
+img {
+    max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong {
+    color: var(--foreground-heavy);
+}
+
+a {
+    color: var(--primary-color);
+}
+
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    text-decoration: none;
+    color: black;
+}
+
+h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover {
+    text-decoration: underline;
+}
+
+nav ul {
+  list-style: none;
+}
+
+nav li {
+  display: inline;
+}
+
+nav li + li:before {
+  content: " | ";
+  margin: 0 0.5ex;
+}
+
+article header {
+    display: flex;
+    flex-direction: row;
+    margin: 1rem 0;
+}
+
+article header time {
+    white-space: nowrap;
+    color: var(--foreground-dim);
+    font-style: italic;
+    flex: 0 0 12ex;
+}
+
+article header h2,
+article header p {
+    font-size: 1rem;
+    display: inline;
+}
+
+code,
+pre {
+  background: #424242;
+  border-radius: 0.3rem;
+  font-family: monospace;
+	font-size: 0.85rem;
+}
+
+pre {
+  padding: 1rem;
+  border-left: 2px solid var(--primary-color);
+  overflow: auto;
+}
+
+code {
+  padding: 0.1rem 0.2rem;
+  color: white;
+}
+
+/* reset the padding for code inside pre */
+pre code {
+  padding: 0;
+}
+
+blockquote {
+  background: var(--background-dim);
+  border-radius: 0 0.3rem 0.3rem 0;
+  font-style: italic;
+  border-left: 2px solid var(--primary-color);
+  margin: 0;
+  padding: 1rem;
+}
+
+/* reset the margin for p inside blockquotes */
+blockquote p {
+  margin: 0;
+}
+
+body > header {
+  padding: 2rem 0;
+}
+
+body footer {
+  color: var(--foreground-dim);
+  font-size: smaller;
+  text-align: center;
+}
+
+header nav {
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+}
+
+header h1 {
+  margin: 0 auto;
+  color: var(--primary-color);
+  font-family: Century Gothic, sans-serif;
+  text-align: center;
+}
+
+header h2 {
+  display: inline;
+  font-size: 1.2rem;
+  font-family: Century Gothic, sans-serif;
+  text-align: center;
+}
+
+.page{
+	padding: 75px 0 75px;
+}
+.shadow{
+	box-shadow: 0 0 25px 0 black;
+}
+.container{
+	background-color: white;
+	font-size: 1.1rem;
+	padding: 15px 15px;
+	margin: auto;
+	position: relative;
+  outline: 1px solid white;
+}
+.title{
+	font-family: Century Gothic, sans-serif;
+	font-weight: bold;
+	font-size: 1.3rem;
+	padding: 5px 5px;
+	text-align: center;
+	box-sizing: border-box;
+	border: 4px solid black;
+	transition: 0.75s;
+}
+.title:hover{
+	background-color: #19BF6C;
+	border: 4px solid #19BF6C;
+	color: white;
+	transition: 0.1s;
+}
+
+hr{
+	height: 4px;
+	background: black;
+	border: none;
+}
+
+p a {
+	color: var(--primary-color);
+}

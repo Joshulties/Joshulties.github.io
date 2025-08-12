@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="author" content="Joshulties">
+    <meta name="description" content="Changing how supplies are given to the player">
+    <link rel="alternate" href="/atom.xml" type="application/atom+xml">
+    <link rel="stylesheet" href="/style.css" type="text/css">
+		<link rel="icon" type="image/ico" href="/favicon.png" />
+    <title>Weighted Drop System | A blog page for game development</title>
+  </head>
+
+  <body>
+    <div class="page"> 
+			<div class="container shadow">
+
+        <header>
+          <div class="title"><h1><a href="/">Joshulties Games</a></h1></div>
+          <nav>
+            <h2>A blog page for game development</h2>
+            <ul>
+              <li><h2><a href="/">Blog</a></h2></li>
+              <li><h2><a href="/archive.html">Archive</a></h2></li>
+              <li><h2><a href="/tags/">Tags</a></h2></li>
+              <li><h2><a href="/about.html">About Me</a></h2></li>
+            </ul>
+          </nav>
+        </header>
+
+        <hr>
+
+        <main>
+        
+
+  
+  <h2>Weighted Drop System</h2>
+  
+
+  <aside>
+    <p>published on 2025-08-05
+
+    
+    | tagged with
+      
+        <a href="/tags/devlog.html">#devlog</a>, 
+        <a href="/tags/gamedev.html">#gamedev</a>, 
+        <a href="/tags/godot.html">#godot</a> and 
+        <a href="/tags/oneirality.html">#oneirality</a>
+    
+    </p>
+  </aside>
+
+  <p>Two years ago, I uploaded a video about <a href="https://www.youtube.com/watch?v=xz5smVlerOg">dynamic drops</a> from boxes when the player destroys them. These items can range from food items, bandages that heal the player, pills to restore their energy, or ammo for any weapons they are carrying. The main inspiration for these came from this <a href="https://developer.valvesoftware.com/wiki/Item_dynamic_resupply">Valve dev community wiki page</a>.</p>
+<p>However, two years ago, I was an idiot.</p>
+<p>The loot system that I wrote <em>did not</em> give items that the player needed. Instead, if a box is broken, it runs a random chance to see if it should drop an item; once it passes that and if the player needed a specific category of item (healing items, energy items, ammo, etc.) then it is added to a list referred to as a <code>raffle</code>. The system chooses a random item from the <code>raffle</code> to give to the player.</p>
+<p>This system is what was used in my public demo, and only yesterday night did I try and revise it with my new knowledge so far.</p>
+<h3>Enter weights</h3>
+<p>Going back to that article, it said that it spawned an item that the player needed the most. So I needed to get a measurement of what the player needed.</p>
+<p>I revised my <code>LootSystem.gd</code> script to include weights variable.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">var</span><span class="w"> </span><span class="n">weights</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">Dictionary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;none&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;food&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;mana&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;ammo_pistol&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;ammo_shotgun&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;ammo_smg&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;ammo_flamethrower&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>The weights are a value between 0.0 and 1.0, which are determined by subtracting 1 from the percentage of the respective category. Using health as an example: <code>1.0 - (player's current hp / player's maximum hp)</code>.</p>
+<p>The function to set these weights were pretty simple because of that:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">func</span><span class="w"> </span><span class="n">calc_weights</span><span class="p">():</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">player_hp</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">hp</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">base_hp</span><span class="p">)</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">percent_health</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">player_hp</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">player_mana</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">mana</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">base_mana</span><span class="p">)</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">percent_mana</span><span class="p">:</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">player_mana</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">pistol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">weapon_handler</span><span class="o">.</span><span class="n">weapon_search</span><span class="p">(</span><span class="s2">&quot;W_Pistol&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">shotgun</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">weapon_handler</span><span class="o">.</span><span class="n">weapon_search</span><span class="p">(</span><span class="s2">&quot;W_Shotgun&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">smg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">weapon_handler</span><span class="o">.</span><span class="n">weapon_search</span><span class="p">(</span><span class="s2">&quot;W_SMG&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="n">flamethrower</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Global</span><span class="o">.</span><span class="n">player</span><span class="o">.</span><span class="n">weapon_handler</span><span class="o">.</span><span class="n">weapon_search</span><span class="p">(</span><span class="s2">&quot;W_FlameThrower&quot;</span><span class="p">))</span>
+
+<span class="w">    </span><span class="c1"># Update Health weight</span>
+<span class="c1">#   print(str(&quot;Chance to drop a medkit: &quot;, percent_health))</span>
+<span class="w">    </span><span class="n">weights</span><span class="p">[</span><span class="s2">&quot;health&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">percent_health</span>
+
+<span class="w">    </span><span class="c1"># Update Mana weight</span>
+<span class="c1">#   print(str(&quot;Chance to drop a pep pill: &quot;, percent_mana))</span>
+<span class="w">    </span><span class="n">weights</span><span class="p">[</span><span class="s2">&quot;mana&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">percent_mana</span>
+
+<span class="w">    </span><span class="c1"># Update Food weight</span>
+<span class="c1">#   print(str(&quot;Chance to drop random food: &quot;, player_hp))</span>
+<span class="w">    </span><span class="n">weights</span><span class="p">[</span><span class="s2">&quot;food&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">player_hp</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1"># Update Pistol ammo weight</span>
+<span class="w">    </span><span class="n">weights</span><span class="p">[</span><span class="s2">&quot;ammo_pistol&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_get_ammo_percentage</span><span class="p">(</span><span class="n">pistol</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1"># Update Shotgun  ammo weight</span>
+<span class="w">    </span><span class="n">weights</span><span class="p">[</span><span class="s2">&quot;ammo_shotgun&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_get_ammo_percentage</span><span class="p">(</span><span class="n">shotgun</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1"># Update SMG  ammo weight</span>
+<span class="w">    </span><span class="n">weights</span><span class="p">[</span><span class="s2">&quot;ammo_smg&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_get_ammo_percentage</span><span class="p">(</span><span class="n">smg</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1"># Update Flamethrower ammo weight</span>
+<span class="w">    </span><span class="n">weights</span><span class="p">[</span><span class="s2">&quot;ammo_flamethrower&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_get_ammo_percentage</span><span class="p">(</span><span class="n">flamethrower</span><span class="p">)</span>
+
+
+<span class="k">func</span><span class="w"> </span><span class="n">_get_ammo_percentage</span><span class="p">(</span><span class="n">weapon</span><span class="p">:</span><span class="w"> </span><span class="n">Firearm</span><span class="p">):</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="p">(</span><span class="n">weapon</span><span class="o">.</span><span class="n">ammo</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb nb-Type">float</span><span class="p">(</span><span class="n">weapon</span><span class="o">.</span><span class="n">max_ammo</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">weapon</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb nb-Type">null</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="mf">0.0</span>
+</code></pre></div>
+
+<p>With that done, all I had to do was update my <code>dynamic_drop</code> function to use the new weights and choose the key with the highest value. And the result is as you&rsquo;d expect &ndash; players will be given items they need the most.</p>
+<div class="codehilite"><pre><span></span><code><span class="go">{</span>
+<span class="go">    ammo_flamethrower:0, </span>
+<span class="go">    ammo_pistol:0.233333, </span>
+<span class="go">    ammo_shotgun:0.775, </span>
+<span class="go">    ammo_smg:0.666667, </span>
+<span class="go">    food:0, </span>
+<span class="go">    health:0.43, </span>
+<span class="go">    mana:0.7, </span>
+<span class="go">    none:0</span>
+<span class="go">}</span>
+<span class="go">Chosen category: ammo_shotgun</span>
+</code></pre></div>
+
+<h3>Possible changes</h3>
+<p>Some things that I would change are how <code>food</code> and the <code>ammo</code> types are dropped. Currently, these weights are linear; ideally I&rsquo;d like for them to be exponential, where the closer to 0.0 the weights are, the higher it will be. That way the player isn&rsquo;t getting ammo when they&rsquo;re half way full of it and they really need something else.</p>
+<p>And for food, it should be a quadratic function, where it&rsquo;s most likely to drop if the player is at half health. If the player has high HP, they are less likely to get it, and the closer they are to 0, it won&rsquo;t drop because that&rsquo;s where the bandages will be given instead.</p>
+<h3>Closing Note</h3>
+<p>I&rsquo;m really happy with this change. I&rsquo;m also pretty happy about having my own written blog too! There&rsquo;s a lot of minor things that I&rsquo;ve done for my game + other separate game projects that I&rsquo;d like to talk about or show, but it&rsquo;s not really that possible since it wouldn&rsquo;t be interesting visually for a short video. (Not to mention having to record it&hellip;)</p>
+<p>Thank you for reading!</p>
+
+
+        </main>
+
+        <hr>
+
+        <footer>
+          <p>This website was built with <a href="https://github.com/venthur/blag">blag</a>.
+          <br>
+          Subscribe to the <a href="/atom.xml">atom feed</a>.
+          <br>
+          <a href="http://www.rssboard.org/rss-validator/check.cgi?url=https%3A//joshulties.neocities.org/atom.xml"><img src="valid-atom.png" alt="[Valid Atom 1.0]" title="Validate my Atom 1.0 feed" /></a>
+          </p>
+        </footer>
+
+			</div>
+		</div>
+  </body>
+
+</html>
